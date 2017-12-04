@@ -1,0 +1,22 @@
+machine:
+  pre:
+      - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
+  services:
+    - docker
+  dependencies:
+      pre:
+         - sudo pip install docker-compose
+
+  test:
+    override:
+        - docker-compose up -d
+        - docker-compose run dockerapp python test.py
+   deployment:
+      hub:
+      branch: [circle_ci_publish,master]
+      commands:
+            - docker login -e $DH_EMAIL -u $DH_UID -p $DH_PWD
+            - docker tag dockerapp_dockerapp $DH_UID/dockerapp:$CIRCLE_SHA1
+            - docker tag dockerapp_dockerapp $DH_UID/dockerapp:latest
+            - docker push $DH_UID/dockerapp:$CIRCLE_SHA1
+            - docker push $DH_UID/dockerapp:latest
